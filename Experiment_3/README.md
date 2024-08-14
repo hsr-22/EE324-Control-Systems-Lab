@@ -1,1 +1,1 @@
-This is our solution for `Experiment 1 : DC Motor Control` for EE324
+This is our solution for `Experiment 3 : Line Follower` for EE324
