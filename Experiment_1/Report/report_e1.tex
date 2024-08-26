@@ -128,10 +128,10 @@ void loop() {
     \item \textbf{Tuning of the PID Gains:} Finding the appropriate values for the PID gains ($K_p$, $K_i$, $K_d$) to meet the design specifications was challenging.\\
     \underline{\textit{Solution:}} Started with a proportional-only controller, then introduced integral and derivative gains gradually, fine-tuning based on the observed response.
 
-    \item \textbf{Non-linearities in the Potentiometer:} The potentiometer used to measure the motor's position had a non-linear response in a certain region, affecting position control accuracy.\\
-    \underline{\textit{Solution:}} Identified non-linear regions by analyzing the potentiometer output across its range. 
+    \item \textbf{Non-linearity Identification:} The potentiometer used to measure the motor's position had a non-linear response in a certain region, affecting position control accuracy.\\
+    \underline{\textit{Solution:}} Created a function that was called in the setup function, that rotated the motor slowly while checking for a large change in readings (indicative of the non-linear region).
 
-    \item \textbf{Overshoot and Stability Issues:} Achieving a balance between a fast response (low rise time) and minimal overshoot was difficult. Over-tuning for speed lead to excessive overshoot or instability.
+    \item \textbf{Overshoot and Stability Issues:} Achieving a balance between a fast response (low rise time) and minimal overshoot was difficult. Over-tuning for speed lead to excessive overshoot or instability.\\
     \underline{\textit{Solution:}} Gradually tuned the derivative gain ($K_d$) to dampen oscillations and reduce overshoot while maintaining a quick response. Monitored the system's step response closely during tuning to prevent instability.
 \end{itemize}
 
