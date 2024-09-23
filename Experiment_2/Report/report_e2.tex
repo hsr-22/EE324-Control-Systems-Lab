@@ -170,7 +170,14 @@ void loop()
     \underline{\textit{Solution:}} Started with smaller values of $Q$ and $R$ and gradually increased them to meet the design specifications. Monitored the system's response closely using \textbf{MATLAB} during tuning to prevent instability.
 
     \item \textbf{Attaining Controller Objectives:} Achieving a balance between a fast response (stabilization) and restricting pendulum vibration ($\alpha$) within $\pm 3^{\circ}$ and base angle oscillation ($\theta$) within $\pm 30^{\circ}$ was challenging. Over-tuning for speed lead to excessive overshoot or instability.\\
-    \underline{\textit{Solution:}} Adjusted the values of $Q$ and $R$ to satisfy the constraints. Monitored the system's response closely using Serial Plotter and its resilience to external disturbance during tuning.
+    \underline{\textit{Solution:}} Adjusted the values of $Q$ and $R$ to satisfy the constraints. Monitored the system's response closely using Serial Plotter and its resilience to external disturbance during tuning. The step response plot obtained from \textbf{MATLAB} is shown in Figure \ref{fig:step}.
+    \begin{figure}[!htb]
+        \centering
+        \includegraphics[width=\textwidth]{../././step_response.png}
+        \caption{Step Response of the System}
+        \label{fig:step}
+    \end{figure}
+    \vspace{-10pt}
 \end{itemize}
 
 \section{Results}
@@ -179,12 +186,12 @@ void loop()
     \item The final values of the LQR controllables were found to be $$Q = \begin{bmatrix} 410 & 0 & 0 & 0 \\ 0 & 4 & 0 & 0 \\ 0 & 0 & 50 & 0 \\ 0 & 0 & 0 & 100 \end{bmatrix}$$ $$R = 14$$
     \vspace{-10pt}
     \item The feedback gain matrix $K$ was found to be $$K = \begin{bmatrix} -5.41 & 96.71 & -3.49 & 13.06 \end{bmatrix}$$
-    \item The relative motor position (error) vs time plot is shown in Figure \ref{fig:plot}
+    \item The relative arm and pendulum position (error) vs time plot is shown in Figure \ref{fig:plot}
     \vspace{-10pt}
     \begin{figure}[!htb]
         \centering
         \includegraphics[width=0.8\textwidth]{../././inv_pendulum.png}
-        % \caption{Motor Position vs Time}
+        \caption{Relative Position vs Time}
         \label{fig:plot}
     \end{figure}
 \end{itemize}
