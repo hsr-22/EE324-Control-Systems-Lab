@@ -1,9 +1,20 @@
+/*
+  Experiment 2 : Inverted Pendulum
 
-/*Q = [410, 0, 0, 0;
+  Group 1:
+  22B3929 - Aman Verma
+  22B3942 - Harsh S Roniyar
+  22B3945 - Pranav Prakash
+*/
+
+/*
+Q = [410, 0, 0, 0;
     0,4, 0, 0;
     0, 0, 50, 0;
     0, 0, 0, 100];
-R = 14;*/
+R = 14;
+*/
+
 #include <SPI.h>
 
 /* Serial rates for UART */
@@ -50,7 +61,6 @@ void setup()
 
   SPI.setClockDivider(SPI_CLOCK_DIV32);    // 500 kHz
 
- 
   //start SPI bus
   SPI.begin();
   
@@ -105,7 +115,6 @@ void loop()
       analogWrite(12, 0);
     }
     
-
 //    Serial.println(error_pendulum_cur);
     
     error_pendulum_prev = error_pendulum_cur;
