@@ -1,0 +1,270 @@
+\documentclass{article}
+\usepackage[a4paper, left = 25mm, right = 25mm, bottom = 25mm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{matlab-prettifier}
+\usepackage{enumitem}
+\usepackage{color}
+% \usepackage{minted}
+\usepackage{palatino}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}  % For rounded boxes
+\usepackage{courier}    % For custom font style
+\fontfamily{SansSerif}
+
+\setlength{\parindent}{0pt}
+
+\title{EE324: Control Systems Lab \\ Experiment 3: Line Follower Robot\\ \textbf{Group 1 - Thursday}}
+\author{\large Harsh S Roniyar\\ \large 22B3942 \and \large Pranav Prakash\\ \large 22B3945 \and \large Aman Verma\\ \large 22B3929}
+
+\begin{document}
+
+\maketitle
+
+\section{Objective}
+
+Design and implement a PID controller for the Spark V robot to make it follow a continuous track, using the IR sensors provided on the robot for this purpose.
+\vspace{5pt}
+
+The specific objectives were:
+\begin{itemize}[noitemsep]
+  \item To trace the track within 30 seconds.
+\end{itemize}
+
+\section{Control Algorithm}
+
+The control algorithm used in this experiment is Proportional-Integral-Derivative (PID) controller. 
+
+The output of the PID controller is given by the equation -
+\begin{equation}
+  u(t) = K_p e(t) + K_i \int_{0}^{t} e(\tau) \text{d}\tau + K_d \frac{\text{d}e(t)}{\text{d}t}
+\end{equation}
+
+where $e(t)$ is the error signal, $K_p$, $K_i$, and $K_d$ are the proportional, integral, and derivative gains respectively. 
+
+The PID controller is implemented in the AVR microcontroller to control the motion of the robot. 
+
+% \newpage
+\section{Implementation}
+Some important code snippets showing the implementation for the line follower robot SPARK V.
+
+We make use of the custom function \texttt{speed\_control()}, to update the motion as well as PWM of the motors on the basis of two control signals provided for each the left and right motor. The PORTB register is accordingly varied to adjust the motion.
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,  % Custom font style and size
+    keywordstyle=\color{blue}\bfseries, % Custom keyword style
+    commentstyle=\color{gray},          % Custom comment style
+    morekeywords={unsigned, char, int, void}, % Specify keywords
+    backgroundcolor=\color{gray!10},    % Light gray background for code
+    columns=fullflexible,
+    keepspaces=true,
+    breaklines=true,
+    language=C++,                      % Specify the language
+    % style=Matlab-Pyglike,
+    escapeinside={(*@}{@*)}
+}
+
+% Rounded box style
+\tcbset{
+    colframe=black!75!white,    % Border color
+    colback=gray!10,            % Background color
+    boxrule=0.5pt,              % Border thickness
+    arc=6pt,                    % Rounded corners
+    outer arc=6pt,
+    top=5pt,                    % Padding
+    bottom=5pt,
+    left=5pt,
+    right=5pt,
+    fonttitle=\bfseries,        % Bold title font
+}
+
+\begin{tcolorbox}[title={Code for \texttt{speed\_control()} function}]
+\begin{lstlisting}
+void speed_control(int left_motor, int right_motor){
+    unsigned char l_val, r_val;
+    unsigned char newPORTB = PORTB;
+    newPORTB &= 0xF0;
+    
+    if(left_motor < 0){
+      //take absolute value
+      l_val = -left_motor;
+      //perform soft left 2
+      newPORTB |= 0x01;
+    }
+    else{
+      l_val = left_motor;
+      //perform soft right
+      newPORTB |= 0x02;
+    }
+    
+    if(right_motor < 0){
+      //take absolute value
+      r_val = -right_motor;
+      //perform soft right 2
+      newPORTB |= 0x08;
+    }
+    else{
+      r_val = right_motor;
+      //perform soft left
+      newPORTB |= 0x04;
+    }
+    
+    l_val = l_val > 255 ? 255 : l_val;
+    r_val = r_val > 255 ? 255 : r_val;
+    PORTB = newPORTB;
+    velocity(l_val, r_val);
+}
+\end{lstlisting}
+\end{tcolorbox}
+
+We also change the PWM using the custom velocity() function to adjust the speed of left and right motors using PWM by setting values ranging from 0 to 255 to the registers OCR1AL and OCR1BL.
+
+\begin{tcolorbox}[title={Code for PWM \texttt{velocity()} function}]
+\begin{lstlisting}
+void velocity(unsigned char left_motor, unsigned char right_motor){
+    //PWM control
+    OCR1AL = left_motor;
+    OCR1BL = right_motor;
+}
+\end{lstlisting}
+\end{tcolorbox}
+
+To decide on how to adjust the left and right sensor values, we create a signal called rotate which will depend on control\_sig, which we keep updating every iteration from its prev value. We have bound this in between -1 to 1 for the sake of simplicity. Division by (cc + offset) is used to get an appropriately scaled version of control signal as control\_sig in itself can take a very large range of values.
+
+\begin{tcolorbox}%[title={Code for PWM \texttt{velocity()} function}]
+\begin{lstlisting}
+//set the value of rotate
+double rotate = prev_rotate + (control_sig/(cc + offset));
+
+//check if its in range of -1 to 1
+rotate = (rotate < -1) ? -1 : rotate;
+rotate = (rotate > 1) ? 1 : rotate;
+\end{lstlisting}
+\end{tcolorbox}
+
+Now using the rotate and translate signals produced we need to correct the PWM values to the motors accordingly. For this we make use of the custom function correction(). We now check the value of the control signal rotate. If it is negative we increase the left control signal to be more than right control signal by a value of 2*translate*rotate, if it is positive we make right control signal less than left by a value of 2*translate*rotate and accordingly adjust the motion of bot.
+
+\begin{tcolorbox}[title={Code for PWM \texttt{correction()} function}]
+\begin{lstlisting}
+void correction(double translate, double rotate){
+    int l_val, r_val;
+    
+    if(rotate < 0){
+      l_val = translate + 2*translate*rotate;
+      r_val = translate;
+    }
+    else{
+      l_val = translate;
+      r_val = translate - 2*translate*rotate;
+    }
+    speed_control(l_val, r_val);
+}
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[title={Code for \texttt{main()} function}]
+\begin{lstlisting}
+int main(void){    
+    init_devices();
+    lcd_set_4bit();
+    lcd_init();
+    
+    // control value constants
+    double kp = 1.05;
+    double ki = 0.00000028;
+    double kd = 0.49;
+    double dt = 1;
+    
+    double prev_err = 0;
+    double prev_rotate = 0;
+    double integral = 0;
+    
+    while(1){
+        double cl, cc, cr;
+        double offset = 0.5;
+        
+        l=ADC_Conversion(3);
+        c=ADC_Conversion(4);
+        r=ADC_Conversion(5);
+        
+        //Display The Sensor Values
+        // lcd_print(1, 1, l, 3);
+        // lcd_print(1, 5, c, 3);
+        // lcd_print(1, 9, r, 3);
+        
+        cl = l;
+        cc = c;
+        cr = r;
+
+        double average = (cl + cc + cr)/3;
+        double err = (cr - cl);
+        double control_sig = kp * err + ki * integral + kd * (err - prev_err)/dt;
+        
+        integral += err * dt;
+        prev_err = err;
+        
+        //set the translate
+        double translate = 45 + average*0.85;
+        //check if its in range of 255
+        translate = (translate > 255) ? 255 : translate;
+        
+        //set the value of rotate
+        double rotate = prev_rotate + (control_sig/(cc + offset));
+        //check if its in range of -1 to 1
+        rotate = (rotate < -1) ? -1 : rotate;
+        rotate = (rotate > 1) ? 1 : rotate;
+        
+        if((cl > 50 && cr > 50) && cc < 120) {
+            rotate = 0;
+            translate /= 8;
+            correction(translate, rotate);
+            _delay_ms(100);
+        }
+        
+        correction(translate, rotate);
+        prev_rotate = 0.2*rotate;
+    }
+}
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Challenges Faced and Solutions}
+\begin{enumerate}[left=0pt, label=\textbf{Problem \arabic*}:, itemsep=10pt]
+  \item \textbf{Issue with Initial PID Parameters:} The code did not perform as expected with the initially set values of $k_p$, $k_i$, and $k_d$, resulting in unsatisfactory motion on the track.\\
+  \underline{\textit{Solution:}} After multiple iterations of tuning these parameters, we were able to achieve smooth turning around the curves.
+
+  \item \textbf{Unbounded Control Signals:} Initially, control signals were not bounded, which caused no visible variations even when we changed parameters.\\
+  \underline{\textit{Solution:}} We solved this by bounding the rotate signal between -1 and 1. Additionally, introducing checks to limit PWM values to 255 resolved the issue.
+
+  \item \textbf{Failure on Discontinuous Track Segments:} The system failed to handle discontinuous square blocks in the track.\\
+  \underline{\textit{Solution:}} By varying the threshold values (e.g., 50, 120) through multiple iterations, we were able to handle this track segment more effectively.
+
+  % \item \textbf{Inconsistent Scaling in Control Signal Expressions:} Different scaling constants were used in the control signal expressions, making it difficult to fine-tune the system by only adjusting controller parameters.\\
+  % \underline{\textit{Solution:}} After discussing with the Teaching Assistant, we removed these scaling constants. We focused on tuning \textit{kp}, \textit{ki}, and \textit{kd} alone, which simplified the process.
+\end{enumerate}
+
+\section{Results}
+
+The bot successfully completed the track in 26 seconds, consistently staying well under the 30-second mark. After incorporating the PID controller, the bot executed smooth turns throughout the course, as opposed to the sharp and jerky turns observed with the initial thresholding-based approach.
+
+The final PID controller constants used were:
+\begin{itemize}[noitemsep]
+    \item $k_p$ = 1.05
+    \item $k_i$ = 2.8 $\times$ 10$^{-7}$
+    \item $k_d$ = 0.49
+\end{itemize}
+
+\section{Observations and Inference}
+
+\begin{itemize}[noitemsep]
+    \item The implementation of the PID controller significantly improved the bot's ability to handle curves on the track, leading to smoother turns compared to the initial thresholding method.
+    \item Fine-tuning of the PID constants (\textit{kp}, \textit{ki}, \textit{kd}) allowed for an optimal balance between stability and responsiveness, leading to faster track completion times.
+    \item The marginal contribution of \textit{ki} (2.8 × 10$^{-7}$) indicates that integral control had minimal impact, likely due to the relatively short duration of the course and the real-time nature of the control adjustments.
+    \item The overall improvement in performance demonstrates that the PID approach is far more efficient and adaptable for handling dynamic changes in the track.
+\end{itemize}
+
+\end{document}
