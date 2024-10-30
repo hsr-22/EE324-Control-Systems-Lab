@@ -1,19 +1,13 @@
 function interactive_bode_plot
     % Initial values for the constants
-    C1 = 220e-9;    % 1 nF
-    C = 100e-9;     % 1 nF
-    R1 = 1e3;    % 10 kΩ
-    R2 = 50;  % 51.6 kΩ
-    R = 3900;      % 1 MΩ
-    R3 = 100;    % 10 MΩ
-    r = 2200;      % 998 Ω
+    C1 = 1e-9;    % 1 nF
+    C = 1e-9;     % 1 nF
+    R1 = 10e3;    % 10 kΩ
+    R2 = 51.6e3;  % 51.6 kΩ
+    R = 1e6;      % 1 MΩ
+    R3 = 10e6;    % 10 MΩ
+    r = 998;      % 998 Ω
     Q = 0.5;      % Example quality factor
-
-    numerator = [(C1/C)^2, (1/C)*(1/R1 - r/(R*R3)), 1/(C^2*R*R2)];
-    denominator = [1, 1/(Q*C*R), 1/(C^2*R^2)];
-
-    % Create the transfer function
-    sys = tf(numerator, denominator);
 
     % Create the figure and sliders
     fig = figure('Name', 'Interactive Bode Plot', 'NumberTitle', 'off');
@@ -88,8 +82,6 @@ function update_plot(C1, C, R1, R2, R, R3, r, Q, ax, varargin)
 
     % Create the transfer function
     sys = tf(numerator, denominator);
-
-    disp(sys)
 
     % Clear the current plot
     cla(ax);
