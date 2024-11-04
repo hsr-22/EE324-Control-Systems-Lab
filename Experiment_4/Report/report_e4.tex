@@ -1,0 +1,102 @@
+\documentclass{article}
+\usepackage[a4paper, left = 25mm, right = 25mm, bottom = 25mm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{matlab-prettifier}
+\usepackage{enumitem}
+\usepackage{color}
+% \usepackage{minted}
+\usepackage{palatino}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}  % For rounded boxes
+\usepackage{courier}    % For custom font style
+\fontfamily{SansSerif}
+
+\setlength{\parindent}{0pt}
+
+\title{EE324: Control Systems Lab \\ Experiment 4: Noise Cancellation in Headphones\\ \textbf{Group 1 - Thursday}}
+\author{\large Harsh S Roniyar\\ \large 22B3942 \and \large Pranav Prakash\\ \large 22B3945 \and \large Aman Verma\\ \large 22B3929}
+
+\begin{document}
+
+\maketitle
+
+\section{Objective}
+
+Design and implement an analog circuit for noise cancellation in headphones.
+\vspace{5pt}
+
+The specific objectives were:
+\begin{itemize}[noitemsep]
+  \item To achieve an attenuation of 20 dB (not necessarily exact 20, small attenuation also works if the system is stable) when a noise of 100 Hz frequency is applied.
+  \item To design an analog compensator to stabilize the system, i.e., loop shaping of the loop transfer function.
+\end{itemize}
+
+\section{Methodology and Design}
+We initially examined the headphone setup to understand its open-loop output transfer characteristics. Subsequently, we employed \texttt{MATLAB} tools to model the compensated stable system using a second-order approximation based on the gathered data. Following this, our attention turned to identifying suitable values of resistances and capacitors in the compensator, labeled as \(C(s)\).
+
+The specific aim was to choose such a compensator that, at a frequency of 100 Hz, achieves a 20 dB (or similar) attenuation in the output-to-noise transfer function. It's crucial to emphasize that this analysis is centered on noise cancellation headphones, with a primary emphasis on enhancing the system's efficiency in minimizing undesired noise.
+
+\subsection{Procedure}
+Frequency response analysis is performed on the headphone setup with sinusoidal waves given as input, from the function generator. Both the input and output are observed in the DSO, and then the magnitude and phase bode plots are plotted versus frequency. This is the open-loop characteristic of headphones.
+
+\subsubsection{Compensator Transfer Function}
+The compensator \(C(s)\) is of second order and is given by the equation:
+\[
+C(s) = \frac{as^2 + bs + c}{ds^2 + es + f}
+\]
+\begin{table}[!htb]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Parameter & Value \\ \hline
+        \( a \) & \\
+        \( b \) & \\
+        \( c \) & \\
+        \( d \) & \\
+        \( e \) & \\
+        \( f \) & \\ \hline
+    \end{tabular}
+    \caption{Values for the parameters.}
+\end{table}
+
+\section{Challenges Faced and Solutions}
+\begin{enumerate}[left=0pt, label=\textbf{Problem \arabic*}:, itemsep=10pt]
+  \item \textbf{Issue with Initial PID Parameters:} The code did not perform as expected with the initially set values of $k_p$, $k_i$, and $k_d$, resulting in unsatisfactory motion on the track.\\
+  \underline{\textit{Solution:}} After multiple iterations of tuning these parameters, we were able to achieve smooth turning around the curves.
+
+  \item \textbf{Unbounded Control Signals:} Initially, control signals were not bounded, which caused no visible variations even when we changed parameters.\\
+  \underline{\textit{Solution:}} We solved this by bounding the rotate signal between -1 and 1. Additionally, introducing checks to limit PWM values to 255 resolved the issue.
+
+  \item \textbf{Failure on Discontinuous Track Segments:} The system failed to handle discontinuous square blocks in the track.\\
+  \underline{\textit{Solution:}} By varying the threshold values (e.g., 50, 120) through multiple iterations, we were able to handle this track segment more effectively.
+
+  % \item \textbf{Inconsistent Scaling in Control Signal Expressions:} Different scaling constants were used in the control signal expressions, making it difficult to fine-tune the system by only adjusting controller parameters.\\
+  % \underline{\textit{Solution:}} After discussing with the Teaching Assistant, we removed these scaling constants. We focused on tuning \textit{kp}, \textit{ki}, and \textit{kd} alone, which simplified the process.
+\end{enumerate}
+
+\section{Results}
+
+The bot successfully completed the track in 26 seconds, consistently staying well under the 30-second mark. After incorporating the PID controller, the bot executed smooth turns throughout the course, as opposed to the sharp and jerky turns observed with the initial thresholding-based approach.
+
+The final PID controller constants used were:
+\begin{itemize}[noitemsep]
+    \item $k_p$ = 1.05
+    \item $k_i$ = 2.8 $\times$ 10$^{-7}$
+    \item $k_d$ = 0.49
+\end{itemize}
+
+\section{Observations and Inference}
+
+\begin{itemize}[noitemsep]
+    \item The implementation of the PID controller significantly improved the bot's ability to handle curves on the track, leading to smoother turns compared to the initial thresholding method.
+    \item Fine-tuning of the PID constants ($k_p$, $k_i$, $k_d$) allowed for an optimal balance between stability and responsiveness, leading to faster track completion times.
+    \item The marginal contribution of $k_i$ (2.8 $\times$ 10$^{-7}$) indicates that integral control had minimal impact, likely due to the relatively short duration of the course and the real-time nature of the control adjustments.
+    \item The overall improvement in performance demonstrates that the PID approach is far more efficient and adaptable for handling dynamic changes in the track.
+\end{itemize}
+
+\end{document}

@@ -1,10 +1,10 @@
 function interactive_bode_plot
     % Initial values for the constants
     C1 = 1e-9;    % 1 nF
-    C = 1e-9;     % 1 nF
+    C = 110e-9;     % 1 nF
     R1 = 10e3;    % 10 kΩ
     R2 = 51.6e3;  % 51.6 kΩ
-    R = 1e6;      % 1 MΩ
+    R = 0.41e6;      % 1 MΩ
     R3 = 10e6;    % 10 MΩ
     r = 998;      % 998 Ω
     Q = 0.5;      % Example quality factor
@@ -25,7 +25,7 @@ function interactive_bode_plot
 
     % Slider for C
     uicontrol('Style', 'text', 'Position', [20 180 60 20], 'String', 'C (nF)');
-    C_slider = uicontrol('Style', 'slider', 'Min', 1e-9, 'Max', 10e-9, 'Value', C, 'Position', [100 180 200 20]);
+    C_slider = uicontrol('Style', 'slider', 'Min', 1e-9, 'Max', 1000e-9, 'Value', C, 'Position', [100 180 200 20]);
     C_value = uicontrol('Style', 'text', 'Position', [310 180 60 20], 'String', num2str(C * 1e9, '%.2f nF'));  % Text to display C value
 
     % Slider for R1
